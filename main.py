@@ -33,6 +33,7 @@ def method_delete():
 @app.post('/patient')
 def patient_post(patient: Patient):
     app.counter += 1
-    return {"id": app.counter, "patient": {"name": f'{patient.name}', "surename": f'{patient.surename}'}}
+    # return {"id": str(app.counter), "patient": patient}
+    return {"id": str(app.counter), "patient": {"name": f'{patient.name}', "surename": f'{patient.surename}'}}
 
 
