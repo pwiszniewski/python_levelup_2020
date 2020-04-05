@@ -5,10 +5,10 @@ from pydantic import BaseModel
 
 class Patient(BaseModel):
     name: str
-    surname: str
+    surename: str
 
 app = FastAPI()
-app.counter = -1
+app.counter = 0
 
 @app.get('/')
 def hello_world():
@@ -33,6 +33,6 @@ def method_delete():
 @app.post('/patient')
 def patient_post(patient: Patient):
     app.counter += 1
-    return {"id": app.counter, "patient": {"name": f'{patient.name}', "surname": f'{patient.surname}'}}
+    return {"id": app.counter, "patient": {"name": f'{patient.name}', "surename": f'{patient.surename}'}}
 
 
