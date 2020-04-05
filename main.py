@@ -47,5 +47,5 @@ def patient_post(patient: Patient):
 def patient_get(id):
     id = int(id)
     if id < 0 or id > app.counter - 1:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=204, detail="Item not found")
     return app.patients[id]
