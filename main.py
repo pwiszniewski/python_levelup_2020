@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from pydantic import BaseModel
 
@@ -9,6 +9,7 @@ class Patient(BaseModel):
 
 app = FastAPI()
 app.counter = 0
+app.patients = []
 
 @app.get('/')
 def hello_world():
@@ -32,8 +33,14 @@ def method_delete():
 
 @app.post('/patient')
 def patient_post(patient: Patient):
+    app.patients.append(patient)
     app.counter += 1
-    # return {"id": str(app.counter), "patient": patient}
-    return {"id": str(app.counter), "patient": {"name": f'{patient.name}', "surename": f'{patient.surename}'}}
+    return {"id": app.counter, "patient": patient}
+    # return {"id": app.counter, "patient": {"name": f'{patient.name}', "surename": f'{patient.surename}'}}
 
-
+@app.get('/patient/{pk}')
+def patient_get(pk):
+    id = int(pk)
+    if id < 1 or id > app.counter:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return app.patients[id-1]
