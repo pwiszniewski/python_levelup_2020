@@ -43,9 +43,9 @@ def patient_post(patient: Patient):
     # return {"id": app.counter, "patient": patient}
     # return {"id": app.counter, "patient": {"name": f'{patient.name}', "surename": f'{patient.surename}'}}
 
-@app.get('/patient/{id}')
+@app.get('/patient/{id}', response_model=Patient)
 def patient_get(id):
     id = int(id)
-    if id < 1 or id > app.counter:
+    if id < 0 or id > app.counter - 1:
         raise HTTPException(status_code=404, detail="Item not found")
-    return app.patients[id-1]
+    return app.patients[id]
