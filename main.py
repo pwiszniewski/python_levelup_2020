@@ -53,5 +53,5 @@ def logout_user(*, response: Response, session_token: str = Cookie(None)):
 @app.get('/welcome')
 def welcome(*, request: Request, response: Response, session_token: str = Cookie(None)):
     if session_token not in app.sessions:
-        raise HTTPException(status_code=403, detail="Unathorised")
+        raise HTTPException(status_code=401, detail="Unathorised")
     return templates.TemplateResponse("welcome.html", {"request": request, "user": app.sessions[session_token]})
