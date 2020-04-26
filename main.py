@@ -3,6 +3,7 @@ import secrets
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
+from starlette.responses import RedirectResponse
 
 app = FastAPI()
 
@@ -28,6 +29,6 @@ def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
     return credentials.username
 
 
-@app.get("/login")
+@app.post("/login")
 def read_current_user(username: str = Depends(get_current_username)):
-    return {"username": username}
+    return RedirectResponse(url='/welcome')
