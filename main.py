@@ -82,14 +82,14 @@ def get_patient(*, session_token: str = Cookie(None)):
     return app.storage
 
 @app.get("/patient/{pk}")
-def get_patient(pk: int, session_token: str = Cookie(None))):
+def get_patient(pk: int, session_token: str = Cookie(None)):
     check_auth(session_token)
     if pk in app.storage:
         return app.storage.get(pk)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @app.delete("/patient/{pk}")
-def get_patient(pk: int, session_token: str = Cookie(None))):
+def get_patient(pk: int, session_token: str = Cookie(None)):
     check_auth(session_token)
     if pk in app.storage:
         app.storage.pop(pk, None)
