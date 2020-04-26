@@ -33,7 +33,7 @@ def get_session_token(credentials: HTTPBasicCredentials = Depends(security)):
     return session_token
 
 
-@app.post("/login")
+@app.get("/login")
 def login_user(session_token: str = Depends(get_session_token)):
     response = RedirectResponse(url='/welcome')
     if session_token not in app.sessions:
@@ -41,7 +41,7 @@ def login_user(session_token: str = Depends(get_session_token)):
         response.set_cookie(key="session_token", value=session_token)
     return response
 
-@app.post("/logout")
+@app.get("/logout")
 def logout_user(*, response: Response, session_token: str = Cookie(None)):
     print(app.sessions)
     print(session_token)
