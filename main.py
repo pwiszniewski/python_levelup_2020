@@ -9,6 +9,7 @@ from starlette.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from pydantic import BaseModel
+from typing import Dict
 
 class Patient(BaseModel):
     name: str
@@ -23,6 +24,8 @@ app.storage: Dict[int, Patient] = {}
 templates = Jinja2Templates(directory="templates")
 
 security = HTTPBasic()
+
+
 
 @app.get('/')
 def hello_world():
@@ -42,6 +45,10 @@ def get_session_token(credentials: HTTPBasicCredentials = Depends(security)):
         app.sessions[session_token] = credentials.username
     return session_token
 
+def check_auth(session_token):
+    if session_token not in app.sessions:
+        raise HTTPException(status_code=401, detail="Unathorised")
+
 @app.post("/login")
 def login_user(session_token: str = Depends(get_session_token)):
     response = RedirectResponse(url='/welcome')
@@ -59,26 +66,31 @@ def logout_user(*, response: Response, session_token: str = Cookie(None)):
 
 @app.get('/welcome')
 def welcome(*, request: Request, response: Response, session_token: str = Cookie(None)):
-    if session_token not in app.sessions:
-        raise HTTPException(status_code=401, detail="Unathorised")
+    check_auth(session_token)
     return templates.TemplateResponse("welcome.html", {"request": request, "user": app.sessions[session_token]})
 
 @app.post("/patient")
 def post_patient(*, patient: Patient, response: Response, session_token: str = Cookie(None)):
-    if session_token not in app.sessions:
-        raise HTTPException(status_code=401, detail="Unathorised")
+    check_auth(session_token)
     app.storage[app.counter] = patient
     app.counter += 1
     return RedirectResponse(url=f'/patient/{app.counter-1}')
 
 @app.get("/patient")
-def get_patient(*, patient: Patient, response: Response, session_token: str = Cookie(None)):
-    if session_token not in app.sessions:
-        raise HTTPException(status_code=401, detail="Unathorised")
+def get_patient(*, session_token: str = Cookie(None)):
+    check_auth(session_token)
     return app.storage
 
 @app.get("/patient/{pk}")
-def show_patient(pk: int):
+def get_patient(pk: int, session_token: str = Cookie(None))):
+    check_auth(session_token)
     if pk in app.storage:
         return app.storage.get(pk)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@app.delete("/patient/{pk}")
+def get_patient(pk: int, session_token: str = Cookie(None))):
+    check_auth(session_token)
+    if pk in app.storage:
+        app.storage.pop(pk, None)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
