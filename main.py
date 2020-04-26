@@ -8,17 +8,13 @@ from starlette.responses import RedirectResponse
 
 app = FastAPI()
 app.secret_key = "99d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8aa34"
-app.sessions = []
+app.sessions = {}
 
 security = HTTPBasic()
 
 @app.get('/')
 def hello_world():
     return {'message': 'Hello World during the coronavirus pandemic!'}
-
-@app.get('/welcome')
-def method_get():
-    return {'message': 'Welcome!'}
 
 def get_session_token(credentials: HTTPBasicCredentials = Depends(security)):
     correct_username = secrets.compare_digest(credentials.username, "trudnY")
@@ -30,15 +26,15 @@ def get_session_token(credentials: HTTPBasicCredentials = Depends(security)):
             headers={"WWW-Authenticate": "Basic"},
         )
     session_token = sha256(bytes(f"{credentials.username}{credentials.password}{app.secret_key}", encoding='utf8')).hexdigest()
+    if session_token not in app.sessions:
+        app.sessions[session_token] = credentials.username
+        response.set_cookie(key="session_token", value=session_token)
     return session_token
 
 
 @app.post("/login")
 def login_user(session_token: str = Depends(get_session_token)):
     response = RedirectResponse(url='/welcome')
-    if session_token not in app.sessions:
-        app.sessions.append(session_token)
-        response.set_cookie(key="session_token", value=session_token)
     return response
 
 @app.post("/logout")
@@ -49,3 +45,10 @@ def logout_user(*, response: Response, session_token: str = Cookie(None)):
         raise HTTPException(status_code=403, detail="Unauthorised")
     app.sessions.remove(session_token)
     return RedirectResponse(url='/')
+
+@app.get('/welcome')
+def welcome(*, request: Request, response: Response, session_token: str = Cookie(None)):
+    if session_token not in app.sessions:
+        raise HTTPException(status_code=403, detail="Unathorised")
+    return templates.TemplateResponse("welcome.html", {"request": request, "user": username})
+    
