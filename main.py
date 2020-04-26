@@ -8,9 +8,17 @@ from starlette.responses import RedirectResponse
 
 from fastapi.templating import Jinja2Templates
 
+from pydantic import BaseModel
+
+class Patient(BaseModel):
+    name: str
+    surname: str
+
 app = FastAPI()
 app.secret_key = "99d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8aa34"
 app.sessions = {}
+app.counter: int = 0
+app.storage: Dict[int, Patient] = {}
 
 templates = Jinja2Templates(directory="templates")
 
@@ -34,7 +42,6 @@ def get_session_token(credentials: HTTPBasicCredentials = Depends(security)):
         app.sessions[session_token] = credentials.username
     return session_token
 
-
 @app.post("/login")
 def login_user(session_token: str = Depends(get_session_token)):
     response = RedirectResponse(url='/welcome')
@@ -55,3 +62,23 @@ def welcome(*, request: Request, response: Response, session_token: str = Cookie
     if session_token not in app.sessions:
         raise HTTPException(status_code=401, detail="Unathorised")
     return templates.TemplateResponse("welcome.html", {"request": request, "user": app.sessions[session_token]})
+
+@app.post("/patient")
+def post_patient(*, patient: Patient, response: Response, session_token: str = Cookie(None)):
+    if session_token not in app.sessions:
+        raise HTTPException(status_code=401, detail="Unathorised")
+    app.storage[app.counter] = patient
+    app.counter += 1
+    return RedirectResponse(url=f'/patient/{app.counter-1}')
+
+@app.get("/patient")
+def get_patient(*, patient: Patient, response: Response, session_token: str = Cookie(None)):
+    if session_token not in app.sessions:
+        raise HTTPException(status_code=401, detail="Unathorised")
+    return app.storage
+
+@app.get("/patient/{pk}")
+def show_patient(pk: int):
+    if pk in app.storage:
+        return app.storage.get(pk)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
