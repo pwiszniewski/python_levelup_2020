@@ -30,5 +30,5 @@ async def get_tracks(composer_name:str):
     cursor = app.db_connection.cursor()
     track_names = cursor.execute("SELECT name FROM tracks WHERE Composer = ? ORDER BY name ASC", (composer_name, )).fetchall()
     if len(track_names) == 0:
-        raise HTTPException(status_code=404, detail="Not found such composer")
+        raise HTTPException(status_code=404, detail={'error': "Not found such composer"})
     return track_names
