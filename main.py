@@ -38,8 +38,8 @@ class Album(BaseModel):
     title: str
     artist_id: int
 
-@app.post("/albums")
-async def add_album(album: Album, status_code=201):
+@app.post("/albums", status_code=201)
+async def add_album(album: Album):
     cursor = app.db_connection.execute("SELECT * FROM artists WHERE ArtistId = (?);", (album.artist_id, ))
     if cursor.fetchone() is None:
         raise HTTPException(status_code=404, detail={'error': "Not found such artist id"})
