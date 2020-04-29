@@ -2,6 +2,7 @@ import sqlite3
 from fastapi import FastAPI, HTTPException
 
 from pydantic import BaseModel
+from fastapi.encoders import jsonable_encoder
 
 app = FastAPI()
 app.secret_key = "99d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8aa34"
@@ -60,3 +61,32 @@ async def get_single_album(album_id: int):
     data = app.db_connection.execute(
         "SELECT * FROM albums WHERE AlbumId = ?", (album_id, )).fetchone()
     return data
+
+class Customer(BaseModel):
+    company: str = None
+    address: str = None
+    city: str = None
+    state: str = None
+    country: str = None
+    postalcode: str = None 
+    fax: str = None
+
+@app.put("/customers/{customer_id}")
+async def update_customer(customer_id: int, customer: Customer):
+    cursor = app.db_connection.execute(
+        """SELECT customerid 
+        FROM customers WHERE customerid = (?)""", (customer_id, ))
+
+    if cursor.fetchone() is None:
+        raise HTTPException(status_code=404, detail={'error': "Not found such customer id"})
+    
+    update_data = customer.dict(exclude_unset=True)
+    update_data_set = ' '.join([f'{key}={update_data[key]}' for key in update_data])
+    cursor = app.db_connection.execute(
+        "UPDATE customers SET customerid = ?", (customer_id, ))
+    app.db_connection.commit()
+
+    app.db_connection.row_factory = sqlite3.Row
+    customer = app.db_connection.execute(
+        """SELECT * FROM customers WHERE customerid = ?""", (customer_id, )).fetchone()
+    return customer
