@@ -83,7 +83,7 @@ async def update_customer(customer_id: int, customer: Customer):
     update_data = customer.dict(exclude_unset=True)
     update_data_set = ' '.join([f'{key}={update_data[key]}' for key in update_data])
     cursor = app.db_connection.execute(
-        "UPDATE customers SET customerid = ?", (customer_id, ))
+        "UPDATE customers SET ? WHERE customerid = ?", (update_data_set, customer_id))
     app.db_connection.commit()
 
     app.db_connection.row_factory = sqlite3.Row
