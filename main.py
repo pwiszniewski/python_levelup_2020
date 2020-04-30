@@ -92,24 +92,23 @@ async def update_customer(customer_id: int, customer: Customer):
 
 @app.get("/sales")
 async def get_sales_for_category(category: str):
-    if category not in ['customers']:
+    print(category)
+    if category not in ('customers', 'genres'):
         raise HTTPException(status_code=404, detail={'error': "Not found such category"})
+    app.db_connection.row_factory = sqlite3.Row
     if category == 'customers':
-        app.db_connection.row_factory = sqlite3.Row
         data = app.db_connection.execute('''
         SELECT i.CustomerId, c.Email, c.Phone, ROUND(SUM(total), 2) Sum FROM invoices i 
         JOIN customers c ON i.CustomerId = c.CustomerId
         GROUP BY i.CustomerId
-        ORDER BY Sum DESC;
+        ORDER BY Sum DESC, i.CustomerId;
+        ''').fetchall()
+    elif category == 'genres':
+        data = app.db_connection.execute('''
+        SELECT gen.Name, COUNT(*) Sum FROM invoice_items ii 
+        JOIN tracks tr on tr.TrackId = ii.TrackId
+        JOIN genres gen ON gen.GenreId = tr.GenreId
+        GROUP BY gen.Name
+        ORDER BY Sum DESC, gen.Name;
         ''').fetchall()
     return data
-    # cursor = app.db_connection.execute("SELECT * FROM genres WHERE name = (?)", (category, ))
-    # if cursor.fetchone() is None:
-    #     raise HTTPException(status_code=404, detail={'error': "Not found such category"})
-    # # app.db_connection.row_factory = sqlite3.Row
-    # data = app.db_connection.execute('''
-    #  SELECT tracks.name AS track_name, artists.name AS album_artist FROM tracks
-    #  JOIN albums ON tracks.albumid = albums.albumid
-    #  JOIN artists ON albums.artistid = artists.artistid;
-    #  ''').fetchall()
-    # return data
