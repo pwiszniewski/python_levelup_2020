@@ -89,7 +89,6 @@ async def update_customer(customer_id: int, customer: Customer):
         """SELECT * FROM customers WHERE customerid = ?""", (customer_id, )).fetchone()
     return customer
 
-
 @app.get("/sales")
 async def get_sales_for_category(category: str):
     print(category)
